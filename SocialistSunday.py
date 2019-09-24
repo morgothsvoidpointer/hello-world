@@ -13,7 +13,7 @@ Spyder Editor
 This is a temporary script file.
 """
 
-import sys
+ import sys
 import os
 from twitter_orig_utils import *
 try:
@@ -55,7 +55,12 @@ exclude_list={}
 
 wainwright_import=0
 
-wainwright_list=array_load(save_dir+"problem_users_socialist_sunday.csv")
+try:
+    wainwright_list=array_load(save_dir+"problem_users_socialist_sunday.csv")
+except UnicodeDecodeError:
+    print("wainwright AS list not found")
+    wainwright_list=[]
+
 
 for entry in wainwright_list:
     
@@ -418,7 +423,10 @@ def users_unfollow(friends_names,exclude_list):
     
     for former_friend in final:
         api.destroy_friendship(former_friend)
-        print(former_friend+" unfollowed, reason "+exclude_list[former_friend])
+        if isinstance(exclude_list,dict):
+            print(former_friend+" unfollowed, reason "+exclude_list[former_friend])
+        else:
+            print(former_friend+" unfollowed")
     
     return(final)
     
@@ -545,7 +553,9 @@ if __name__ == '__main__':
         #export to csv
         patel1.save_json(amp_sh,save_dir+"raw_ss_tweets.json")
         list_write(save_dir+"friendlist.csv",friends_names)
-        list_write(save_dir+"socialist_sunday_list.csv",keylist)    
+        if os.path.exists(file=save_dir+"socialist_sunday_list.csv)
+            os.rename(src=save_dir+"socialist_sunday_list.csv",dst=save_dir+"socialist_sunday_list_old.csv")
+        list_write(save_dir+"socialist_sunday_list.csv",keylist) 
     #while(1):
         #myfriends=api.friends()
         #for i in range(len(myfriends)):
