@@ -11,9 +11,15 @@ from tweepy import API
 from tweepy import Cursor
 from datetime import datetime, date, time, timedelta
 from collections import Counter
+import matplotlib
+import pandas as pd
+import numpy as np
+import datetime
 import sys
 import tweepy
 import twint
+#from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
+
 
 try:
     from twitter_orig import python_dir, save_dir
@@ -26,6 +32,7 @@ except ImportError:
     if python_dir not in sys.path: sys.path.append(python_dir)
 
 import patel1
+import twitter_orig
 
 # Consumer keys and access tokens, used for OAuth
 consumer_key = 'Xa8XbijTP7F3sg0QJ1QUoLq6f'
@@ -319,23 +326,50 @@ def line_breaks_add(filename):
     with open(filename,"r") as f:
         s=f.readlines()
     
+#word cloud representing the user's posts
+        
+def word_cloud_history(text_list):
+    stop_words = ["https", "co", "RT"] + list(STOPWORDS) 
+    words=" ".join(text_list)
+    wordcloud_local = WordCloud(stopwords=stop_words, background_color="white",height=400,width=800,max_words=500).generate(words)
+    plt.imshow(wordcloud_local, interpolation='bilinear')
+    plt.axis("off")
+    plt.show()
+    wordcloud_local.to_file(save_dir+"wc.png")
+        
+def time_hist(occurance_list):
+    O=np.array(occurance_list)
+    frame=pd.DataFrame({'x':O})
+    (frame.set_index('x'). # use date-time as index
+     assign(hour=lambda x: x.index.hour). # add new column with month
+     groupby('hour'). # group by that column
+     sum(). # find a sum of the only column 'y'
+     plot.bar()) # make a barplot
+
+
 
 #%%   
 # Driver code 
 if __name__ == '__main__':
     account_list = ["@TomNwainwright"]
-    id_list_all,text_list,hashtags,mentions=user_history_extract(account_list,save_file=save_dir+"temp_user_export.csv",option="twint")
-
-            
+    id_list_all,text_list,hashtags,mentions,times=user_history_extract(account_list,save_file=save_dir+"temp_user_export.csv",option="twint")
+    word_cloud_history(text_list)
+    #plot the timestamps
+    
+    
+#%%           
     account_list=["@Alanlsg"]
     keywords=["Soros","Rothschild","Zio","soros","rothschild","zio","Rotschild","rotschild","Cabal","holohoax","Holohoax","Jewish money", "jewish money", "Jewish influence","jewish influence","ZioNazi","Khazar","Khazarian","NWO"]
+#%%    
+    
     query=keyword_OR_query_construct(keywords)
     query=None
-    id_list_all,text_list,hashtags,mentions=user_history_extract(account_list,save_file=save_dir+"temp_user_export.csv",option="twint",query=query)
+    id_list_all,text_list,hashtags,mentions,times=user_history_extract(account_list,save_file=save_dir+"temp_user_export.csv",option="twint",query=query)
+#%%    
     account_list=["@Cybrarian64"]
     keywords=["Soros","Rothschild","Zio","soros","rothschild","zio","Rotschild","rotschild","Cabal","holohoax","Holohoax","Jewish money", "jewish money", "Jewish influence","jewish influence","ZioNazi","Khazar","Khazarian","NWO"]
     query=keyword_OR_query_construct(keywords)
 
-    id_list_all,text_list,hashtags,mentions=user_history_extract(account_list,save_file=save_dir+"temp_user_export.csv",option="twint",query=query,testmode=True)
+    id_list_all,text_list,hashtags,mentions,times=user_history_extract(account_list,save_file=save_dir+"temp_user_export.csv",option="twint",query=query,testmode=True)
  
     
