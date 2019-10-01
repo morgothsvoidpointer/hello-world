@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sun Aug 11 14:42:20 2019
-
 @author: deepthought42
 """
 
@@ -11,14 +10,15 @@ from tweepy import API
 from tweepy import Cursor
 from datetime import datetime, date, time, timedelta
 from collections import Counter
-import matplotlib
+import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import datetime
+import re
+#import datetime
 import sys
 import tweepy
 import twint
-#from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
+from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 
 
 try:
@@ -329,7 +329,13 @@ def line_breaks_add(filename):
 #word cloud representing the user's posts
         
 def word_cloud_history(text_list):
-    stop_words = ["https", "co", "RT"] + list(STOPWORDS) 
+    stop_words = ["https", "co", "RT"] + list(STOPWORDS) + patel1.load_json("stopwords-iso.json")
+    #prune all links
+    
+    for count,text in enumerate(text_list):
+        text_list[count]=re.sub(r"http\S+", "", text)
+        text_list[count]=re.sub(r"https\S+", "", text)
+        
     words=" ".join(text_list)
     wordcloud_local = WordCloud(stopwords=stop_words, background_color="white",height=400,width=800,max_words=500).generate(words)
     plt.imshow(wordcloud_local, interpolation='bilinear')
@@ -353,7 +359,7 @@ def time_hist(occurance_list):
 if __name__ == '__main__':
     account_list = ["@TomNwainwright"]
     id_list_all,text_list,hashtags,mentions,times=user_history_extract(account_list,save_file=save_dir+"temp_user_export.csv",option="twint")
-    word_cloud_history(text_list)
+    word_cloud_history(text_list[0])
     #plot the timestamps
     
     
@@ -371,5 +377,3 @@ if __name__ == '__main__':
     query=keyword_OR_query_construct(keywords)
 
     id_list_all,text_list,hashtags,mentions,times=user_history_extract(account_list,save_file=save_dir+"temp_user_export.csv",option="twint",query=query,testmode=True)
- 
-    
