@@ -1,29 +1,21 @@
+
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jun  3 21:38:14 2019
-
 @author: deepthought42
 """
 
 # -*- coding: utf-8 -*-
 """
 Spyder Editor
-
 This is a temporary script file.
 """
 
- import sys
+import sys
 import os
 from twitter_orig_utils import *
-try:
-    from twitter_orig import python_dir, save_dir
-except ImportError:
-    userhome = os.path.expanduser('~')
-    #python_dir=userhome+'/Documents/ThinkTank/library/python/python_other/word_match/'
-    python_dir=userhome+'/Documents/word_files_dir/'
-    save_dir=python_dir+'Output/'
-    if python_dir not in sys.path: sys.path.append(python_dir)
+from twitter_authorise import api, auth, save_dir, userhome, python_dir
 
 from SingleUserExtract import user_history_extract, keyword_OR_query_construct
 import patel1
@@ -33,13 +25,18 @@ import tweepy
 import twint
 import re
 import asyncio
+import random
+
 
 max_follower_count=10000
 max_tweets=100000
 query1="#SocialistSunday -filter:retweets"
 query2="#SocialistAnyDay -filter:retweets"
 
-load_file=True
+load_file=1
+
+random_shuffle=1
+
 follow=True
 lookup=False
 if follow:
@@ -76,8 +73,8 @@ exclude_list["@Banjomarla".lower()]="Soros conspiracies"
 exclude_list["@beholdcosmicwav".lower()]="Rotschild, 9/11 denial"
 exclude_list["@bellhappe".lower()]="Rotschild and Soros"
 exclude_list["@bel_nagy".lower()]="Soros"
-
-
+exclude_list["@SilkCutBlue".lower()]="Brexit party sympathiser"
+exclude_list["@ISRAEL_PREDATOR".lower()]="NWO"
 
 ignore_posts_from={}
 
@@ -85,25 +82,13 @@ ignore_posts_from['@makinghappyme']="Keeps tagging in non-socialists"
 ignore_posts_from['makinghappyme']="Keeps tagging in non-socialists"
 
 
-# Consumer keys and access tokens, used for OAuth
-consumer_key = 'Xa8XbijTP7F3sg0QJ1QUoLq6f'
-consumer_secret = 'cRBjxlQK3PO2cy4zFnfZGlLdtIYm1c9KMIe8IsZVaE0OqFIMsh'
-access_token = '1092850952284131328-6prMHiiBPsQHU5In4xho9N1cQy9wpO'
-access_token_secret = 'BOs3QPs7PnF8uRMgaexuv3BizPPkMeSdXq3YEqATcIsM9'
+
 
 query1="#SocialistSunday -filter:retweets"
 query2="#SocialistAnyDay -filter:retweets"
 
 
-
-# OAuth process, using the keys and tokens
-auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-auth.set_access_token(access_token, access_token_secret)
- 
-# Creation of the actual interface, using authentication
-api = tweepy.API(auth,wait_on_rate_limit=True)
-
-
+    
 #Config the twint object
 c = twint.Config()
 
@@ -345,6 +330,8 @@ def users_follow(user_list,friends_names,max_follower_count=10000,follow=False,l
         if user.lower() in [a.lower() for a in exclude_list.keys()]:
             print("user "+user+" not added, "+exclude_list[user.lower()])
             ss_excluded.append(user)
+        elif re.sub("@","",user) in friends_names:
+                print("user "+user+" on friendlist")                
         else:
             if lookup:
                 try:
@@ -400,6 +387,7 @@ def users_follow(user_list,friends_names,max_follower_count=10000,follow=False,l
                     else:    
                         print("found user "+user_get.screen_name+" with "+str(user_get.followers_count)+" followers")       
                 else:
+                    superuser_data.append(user_get)
                     print("you will have to add superuser "+user_get.screen_name+" manually")
     print("total number of friends made is "+str(counter))
 
@@ -413,16 +401,21 @@ def users_unfollow(friends_names,exclude_list):
     friends_lower=[]
     for friend_name in friends_names:
         friends_lower.append('@'+friend_name.lower())
-    
+        friends_lower.append(friend_name.lower())
     
     problem_users_lower=[]
-    for problem_user in exclude_list.keys():
-        problem_users_lower.append(problem_user.lower())
-    
+    if isinstance(exclude_list,dict):
+        for problem_user in exclude_list.keys():
+            problem_users_lower.append(problem_user.lower())
+    else:
+        for problem_user in exclude_list:
+            problem_users_lower.append(problem_user.lower())
+        
     final=intersection(friends_lower,problem_users_lower)
     
     for former_friend in final:
         api.destroy_friendship(former_friend)
+        time.sleep(100)
         if isinstance(exclude_list,dict):
             print(former_friend+" unfollowed, reason "+exclude_list[former_friend])
         else:
@@ -553,7 +546,7 @@ if __name__ == '__main__':
         #export to csv
         patel1.save_json(amp_sh,save_dir+"raw_ss_tweets.json")
         list_write(save_dir+"friendlist.csv",friends_names)
-        if os.path.exists(file=save_dir+"socialist_sunday_list.csv)
+        if os.path.exists(save_dir+"socialist_sunday_list.csv"):
             os.rename(src=save_dir+"socialist_sunday_list.csv",dst=save_dir+"socialist_sunday_list_old.csv")
         list_write(save_dir+"socialist_sunday_list.csv",keylist) 
     #while(1):
@@ -566,9 +559,12 @@ if __name__ == '__main__':
         friends_names=list_flat(array_load(save_dir+"friendlist.csv"))
         keylist=list_flat(array_load(save_dir+"socialist_sunday_list.csv"))
         
-        
+    if random_shuffle:
+        random.shuffle(keylist)
         
     user_data,superuser_data,user_failure,ss_excluded=users_follow(keylist,friends_names,max_follower_count,follow,lookup)
+    superusers=[user.screen_name for user in superuser_data]
+    list_write(save_dir+"socialist_sunday_list_superusers.csv",superusers)
     
     A=api.me()
     user_id=A.id
@@ -607,10 +603,10 @@ if __name__ == '__main__':
     
     #save the text
     import csv
-    with open("ss_text_dump.csv",w,newline="") as f:
-        writer.csv=csv.writer(f)
+    with open("ss_text_dump.csv","w",newline="") as f:
+        writer=csv.writer(f)
         for count,text in enumerate(text_list_all):
-            writer.writerows(id_list_all[count])
+            writer.writerows(map(lambda x: [x], id_list_all[count]))
             for tweet in text:
                 writer.writerows(tweet)
     
@@ -699,5 +695,5 @@ if __name__ == '__main__':
 #            print(special.author.name)
             
             
-    
-    
+
+
