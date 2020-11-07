@@ -5,20 +5,19 @@ Created on Sun Aug 11 14:42:20 2019
 @author: deepthought42
 """
 
-from tweepy import OAuthHandler
-from tweepy import API
+
 from tweepy import Cursor
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, timedelta
 from collections import Counter
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import re
 #import datetime
-import sys
+
 import tweepy
 import twint
-from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
+from wordcloud import WordCloud, STOPWORDS
 import nltk_functions
 import webbrowser
 
@@ -26,11 +25,10 @@ import nest_asyncio
 nest_asyncio.apply()
 
 import patel1
-import twitter_orig
 
 
 from twitter_authorise import api, auth, save_dir, userhome, python_dir
-
+from twitter_orig_utils import list_flat
 
 def user_history_extract(account_list,save_file=None,option="tweepy",query=None,days_back=10000,testmode=False,proj_id="users_ss"):
     
