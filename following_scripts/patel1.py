@@ -83,9 +83,9 @@ def try_load_or_process(filename, processor_fn, function_arg):
     if filename.endswith("json"):
         load_fn = load_json
         save_fn = save_json
-    else:
-        load_fn = load_bin
-        save_fn = save_bin
+    #else:
+        #load_fn = load_bin
+        #save_fn = save_bin
     if os.path.exists(filename):
         print("Loading " + filename)
         return load_fn(filename)
